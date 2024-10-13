@@ -18,6 +18,12 @@ function App() {
   const [githubRepoInputValue, setGithubRepoInputValue] = useState<string>('');
   const [projectNameInputValue, setProjectNameInputValue] =
     useState<string>('');
+  const [success, setSuccess] = useState<boolean>(false);
+  const [failed, setFailed] = useState<boolean>(false);
+  const [port, setPort] = useState<Number>(0);
+
+  const [projectNameInputValue, setProjectNameInputValue] =
+    useState<string>('');
   const [isRepoValid, setIsRepoValid] = useState<boolean>(true);
   const [isProjectNameValid, setIsProjectNameValid] = useState<boolean>(true);
   const { setIsEnabled } = useContext(githubButtonContext);
@@ -57,10 +63,17 @@ function App() {
       setIsEnabled(false);
     }
   }, [githubRepoInputValue, projectNameInputValue, setIsEnabled]);
+
   const submitFormHandler = async (e: React.FormEvent<HTMLFormElement>) => {
+    setFailed(false);
+    setSuccess(false);
     e.preventDefault();
-    const response = await fetch('http://localhost:8173', {
+    console.log('sending', projectNameInputValue, githubRepoInputValue);
+    const response = await fetch('http://172.23.202.105:3000/uploadProject', {
       method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         projectName: projectNameInputValue,
         url: githubRepoInputValue,
@@ -68,6 +81,12 @@ function App() {
     });
     const data = await response.json();
     console.log(data);
+    if (data.success === true) {
+      setPort(data.port);
+      setSuccess(true);
+    } else {
+      setFailed(true);
+    }
   };
 
   const onChangeGithubRepoHandler = (
@@ -103,6 +122,21 @@ function App() {
         />
 
         <Button onClick={() => {}}>Deploy Static Site</Button>
+        <p style={{ display: success ? 'block' : 'none', color: 'green' }}>
+          Application was successfully deployed.
+        </p>
+        <p style={{ display: failed ? 'block' : 'none', color: 'red' }}>
+          Deployment Failed.
+        </p>
+        <p
+          style={{
+            display: success ? 'block' : 'none',
+            marginTop: '-10px',
+            color: 'green',
+          }}
+        >
+          Application is accessible via port: {port}
+        </p>
       </FormEl>
     </>
   );

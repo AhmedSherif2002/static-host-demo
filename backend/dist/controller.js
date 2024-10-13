@@ -9,10 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.deploy = void 0;
 const models_1 = require("./models");
 const { exec } = require("child_process");
 const fs = require("fs");
-const deploy = (repo, app) => __awaiter(void 0, void 0, void 0, function* () {
+const deploy = (repo, app, cb) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         // const found = await apps.find({appName: app});
@@ -23,13 +24,15 @@ const deploy = (repo, app) => __awaiter(void 0, void 0, void 0, function* () {
         const maxPort = (_a = (yield models_1.apps.find({}).sort({ port: -1 }))[0]) === null || _a === void 0 ? void 0 : _a.port;
         const port = maxPort ? maxPort + 1 : 3500;
         console.log(maxPort, port);
-        cloneRepo(repo, app, port);
+        cloneRepo(repo, app, port, cb);
     }
     catch (err) {
+        cb(err);
         console.log(err);
     }
 });
-const cloneRepo = (repo, appName, port) => {
+exports.deploy = deploy;
+const cloneRepo = (repo, appName, port, cb) => {
     const cloneRepo = exec(`git clone ${repo} /var/www/${appName}`);
     cloneRepo.stdout.on("data", (data) => {
         console.log(data);
@@ -41,16 +44,18 @@ const cloneRepo = (repo, appName, port) => {
         console.log(`Process exited with code ${code}`);
         if (code === 0) {
             console.log("done");
-            nginxConf(appName, port);
+            nginxConf(appName, port, cb);
             update(repo, appName, port);
         }
+        else
+            cb(code);
     });
 };
 const update = (repo, appName, port) => __awaiter(void 0, void 0, void 0, function* () {
     const inserted = yield models_1.apps.create({ appName, repo, port });
     console.log(inserted);
 });
-const nginxConf = (app, port) => {
+const nginxConf = (app, port, cb) => {
     const content = `
     server {
         listen ${port};
@@ -70,10 +75,14 @@ const nginxConf = (app, port) => {
         if (e) {
             return console.log(e);
         }
-        exec("service nginx restart");
+        const reset = exec("service nginx restart");
+        reset.on("close", (code) => {
+            if (code !== 0)
+                return cb(code);
+            cb(null, port);
+        });
     });
 };
-deploy("https://github.com/AhmedSherif2002/statictest.git", "app6");
 /*
     - Make a directory for the application.
     - Deploy the application in that directory.

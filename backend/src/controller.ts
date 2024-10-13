@@ -2,7 +2,7 @@ import { apps, ports } from "./models";
 const { exec } = require("child_process");
 const fs = require("fs");
 
-const deploy = async (repo:string, app:string)=>{
+const deploy = async (repo:string, app:string, cb:any)=>{
     try{
         // const found = await apps.find({appName: app});
         // if(found.length !== 0){
@@ -12,13 +12,14 @@ const deploy = async (repo:string, app:string)=>{
         const maxPort = (await apps.find({}).sort({ port: -1 }))[0]?.port;
         const port = maxPort?maxPort+1:3500;
         console.log(maxPort,port);
-        cloneRepo(repo, app, port);
+        cloneRepo(repo, app, port, cb);
     }catch(err){
+        cb(err);
         console.log(err);
     }
 } 
 
-const cloneRepo = (repo:string, appName:string,port:Number)=>{
+const cloneRepo = (repo:string, appName:string,port:Number, cb:any)=>{
     const cloneRepo = exec(`git clone ${repo} /var/www/${appName}`);
     cloneRepo.stdout.on("data", (data:any)=>{
         console.log(data);
@@ -30,9 +31,9 @@ const cloneRepo = (repo:string, appName:string,port:Number)=>{
         console.log(`Process exited with code ${code}`);
         if(code === 0){
             console.log("done")
-            nginxConf(appName, port);
+            nginxConf(appName, port, cb);
             update(repo,appName,port);
-        }
+        }else cb(code);
     })
 }
 
@@ -43,7 +44,7 @@ const update = async (repo:String, appName:String, port:Number) =>{
 
 }
 
-const nginxConf = (app:string,port:Number)=>{
+const nginxConf = (app:string,port:Number, cb:any)=>{
     const content = `
     server {
         listen ${port};
@@ -63,14 +64,18 @@ const nginxConf = (app:string,port:Number)=>{
         if(e){
             return console.log(e);
         }
-        exec("service nginx restart");
+        const reset = exec("service nginx restart");
+        reset.on("close",(code:number)=>{
+            if(code !== 0) return cb(code);
+            cb(null,port);
+        })
     })
 }
 
-deploy("https://github.com/AhmedSherif2002/statictest.git","app6");
+// deploy("https://github.com/AhmedSherif2002/statictest.git","app",()=>0);
 // deploy("https://github.com/AhmedSherif2002/statictest.git","app");
 
-export { };
+export { deploy };
 
 
 /*  
