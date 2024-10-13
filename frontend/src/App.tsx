@@ -20,10 +20,8 @@ function App() {
     useState<string>('');
   const [success, setSuccess] = useState<boolean>(false);
   const [failed, setFailed] = useState<boolean>(false);
-  const [port, setPort] = useState<Number>(0);
+  const [port, setPort] = useState<number>(0);
 
-  const [projectNameInputValue, setProjectNameInputValue] =
-    useState<string>('');
   const [isRepoValid, setIsRepoValid] = useState<boolean>(true);
   const [isProjectNameValid, setIsProjectNameValid] = useState<boolean>(true);
   const { setIsEnabled } = useContext(githubButtonContext);
