@@ -25,7 +25,7 @@ This project sets up a Dockerized NGINX server that hosts static websites by clo
     docker run -d -p 80:80 <container-id>
       ```
 3. **Access your Hosted Site**
-- The website will be available at http://lvh.me or http://<subdomain>.lvh.me.
+- The website will be available at http://lvh.me or http://<strong>\<subdomain></strong>.lvh.me
 - Replace <subdomain> with the name of your Git repository to access different sites.
 
 ## Example
