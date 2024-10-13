@@ -27,3 +27,9 @@ This project sets up a Dockerized NGINX server that hosts static websites by clo
 3. **Access your Hosted Site**
 - The website will be available at http://lvh.me or http://<subdomain>.lvh.me.
 - Replace <subdomain> with the name of your Git repository to access different sites.
+
+## Example
+<div align="center">
+    <img src="img/example.png" alt="Two different hosted repos">
+    <p><em>Two different hosted repos</em></p>
+</div>
