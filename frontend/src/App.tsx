@@ -12,22 +12,49 @@ const FormEl = styled.form`
     align-self: flex-end;
   }
 `;
+
 function App() {
+  const [isBegin, setIsBegin] = useState<boolean>(true);
   const [githubRepoInputValue, setGithubRepoInputValue] = useState<string>('');
   const [projectNameInputValue, setProjectNameInputValue] =
     useState<string>('');
+  const [isRepoValid, setIsRepoValid] = useState<boolean>(true);
+  const [isProjectNameValid, setIsProjectNameValid] = useState<boolean>(true);
   const { setIsEnabled } = useContext(githubButtonContext);
+  useEffect(() => {
+    if (isBegin) {
+      setIsBegin(false);
+    } else {
+      if (projectNameInputValue) {
+        setIsProjectNameValid(true);
+      } else {
+        setIsProjectNameValid(false);
+      }
+    }
+  }, [projectNameInputValue, setIsBegin]);
+  useEffect(() => {
+    if (isBegin) {
+      setIsBegin(false);
+    } else {
+      if (
+        githubRepoInputValue &&
+        githubRepoInputValue.startsWith('https://github.com/')
+      ) {
+        setIsRepoValid(true);
+      } else {
+        setIsRepoValid(false);
+      }
+    }
+  }, [githubRepoInputValue, setIsBegin]);
   useEffect(() => {
     if (
       githubRepoInputValue &&
       githubRepoInputValue.startsWith('https://github.com/') &&
       projectNameInputValue
     ) {
-      console.log('valid');
       setIsEnabled(true);
     } else {
       setIsEnabled(false);
-      console.log('invalid');
     }
   }, [githubRepoInputValue, projectNameInputValue, setIsEnabled]);
   const submitFormHandler = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -61,12 +88,16 @@ function App() {
           name="githubUrl"
           placeHolder="https://github.com/example/clickhouse"
           onChange={onChangeGithubRepoHandler}
+          isValid={isRepoValid}
           value={githubRepoInputValue}
+          inValidText="please enter valid github url"
         />
         <InputWithLabel
+          isValid={isProjectNameValid}
           name="projectName"
           labelText="Project Name"
           placeHolder="project name"
+          inValidText="please enter project name"
           onChange={onChangeProjectNameHandler}
           value={projectNameInputValue}
         />
