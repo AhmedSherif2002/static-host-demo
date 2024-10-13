@@ -12,25 +12,53 @@ const FormEl = styled.form`
     align-self: flex-end;
   }
 `;
-function App() {
-  const [githubRepoInputValue, setGithubRepoInputValue] = useState<string>('');
-  const [projectNameInputValue, setProjectNameInputValue] = useState<string>('');
-  const [success,setSuccess] = useState<boolean>(false);
-  const [failed,setFailed] = useState<boolean>(false);
-  const [port,setPort] = useState<Number>(0);
 
+function App() {
+  const [isBegin, setIsBegin] = useState<boolean>(true);
+  const [githubRepoInputValue, setGithubRepoInputValue] = useState<string>('');
+  const [projectNameInputValue, setProjectNameInputValue] =
+    useState<string>('');
+  const [success, setSuccess] = useState<boolean>(false);
+  const [failed, setFailed] = useState<boolean>(false);
+  const [port, setPort] = useState<number>(0);
+
+  const [isRepoValid, setIsRepoValid] = useState<boolean>(true);
+  const [isProjectNameValid, setIsProjectNameValid] = useState<boolean>(true);
   const { setIsEnabled } = useContext(githubButtonContext);
+  useEffect(() => {
+    if (isBegin) {
+      setIsBegin(false);
+    } else {
+      if (projectNameInputValue) {
+        setIsProjectNameValid(true);
+      } else {
+        setIsProjectNameValid(false);
+      }
+    }
+  }, [projectNameInputValue, setIsBegin]);
+  useEffect(() => {
+    if (isBegin) {
+      setIsBegin(false);
+    } else {
+      if (
+        githubRepoInputValue &&
+        githubRepoInputValue.startsWith('https://github.com/')
+      ) {
+        setIsRepoValid(true);
+      } else {
+        setIsRepoValid(false);
+      }
+    }
+  }, [githubRepoInputValue, setIsBegin]);
   useEffect(() => {
     if (
       githubRepoInputValue &&
       githubRepoInputValue.startsWith('https://github.com/') &&
       projectNameInputValue
     ) {
-      console.log('valid');
       setIsEnabled(true);
     } else {
       setIsEnabled(false);
-      console.log('invalid');
     }
   }, [githubRepoInputValue, projectNameInputValue, setIsEnabled]);
 
@@ -38,11 +66,11 @@ function App() {
     setFailed(false);
     setSuccess(false);
     e.preventDefault();
-    console.log("sending", projectNameInputValue,githubRepoInputValue);
+    console.log('sending', projectNameInputValue, githubRepoInputValue);
     const response = await fetch('http://172.23.202.105:3000/uploadProject', {
       method: 'post',
-      headers:{
-        "Content-Type": "application/json"
+      headers: {
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         projectName: projectNameInputValue,
@@ -51,10 +79,10 @@ function App() {
     });
     const data = await response.json();
     console.log(data);
-    if(data.success === true){
+    if (data.success === true) {
       setPort(data.port);
       setSuccess(true);
-    }else{
+    } else {
       setFailed(true);
     }
   };
@@ -77,21 +105,37 @@ function App() {
           name="githubUrl"
           placeHolder="https://github.com/example/clickhouse"
           onChange={onChangeGithubRepoHandler}
+          isValid={isRepoValid}
           value={githubRepoInputValue}
+          inValidText="please enter valid github url"
         />
         <InputWithLabel
+          isValid={isProjectNameValid}
           name="projectName"
           labelText="Project Name"
           placeHolder="project name"
+          inValidText="please enter project name"
           onChange={onChangeProjectNameHandler}
           value={projectNameInputValue}
         />
 
         <Button onClick={() => {}}>Deploy Static Site</Button>
-        <p style={{display:success?"block":"none", color:"green"}}>Application was successfully deployed.</p>
-        <p style={{display:failed?"block":"none", color:"red"}}>Deployment Failed.</p>
-        <p style={{display:success?"block":"none", marginTop:"-10px", color:"green"}}>Application is accessible via port: {port}</p>
-      </FormEl> 
+        <p style={{ display: success ? 'block' : 'none', color: 'green' }}>
+          Application was successfully deployed.
+        </p>
+        <p style={{ display: failed ? 'block' : 'none', color: 'red' }}>
+          Deployment Failed.
+        </p>
+        <p
+          style={{
+            display: success ? 'block' : 'none',
+            marginTop: '-10px',
+            color: 'green',
+          }}
+        >
+          Application is accessible via port: {port}
+        </p>
+      </FormEl>
     </>
   );
 }
