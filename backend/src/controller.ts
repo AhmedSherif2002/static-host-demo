@@ -2,7 +2,7 @@ import { apps } from "./models";
 import { exec } from "child_process";
 import fs from "fs";
 
-const deploy = async (repo:string, app:string, cb:any)=>{
+const deploy = async (repo:string, app:string, cb: (err:any, port?: number)=>void )=>{
     try{
         // const found = await apps.find({appName: app});
         // if(found.length !== 0){
@@ -19,7 +19,7 @@ const deploy = async (repo:string, app:string, cb:any)=>{
     }
 } 
 
-const cloneRepo = (repo:string, appName:string,port:Number, cb:any)=>{
+const cloneRepo = (repo:string, appName:string,port:number, cb:(err:any, port?: number)=>void )=>{
     const cloneRepo = exec(`git clone ${repo} /var/www/${appName}`);
     cloneRepo.stdout?.on("data", (data:any)=>{
         console.log(data);
@@ -27,7 +27,7 @@ const cloneRepo = (repo:string, appName:string,port:Number, cb:any)=>{
     cloneRepo.stderr?.on("data", (error:any)=>{
         console.error(error);
     })
-    cloneRepo.on("close", (code:any)=>{
+    cloneRepo.on("close", (code)=>{
         console.log(`Process exited with code ${code}`);
         if(code === 0){
             console.log("done")
@@ -38,13 +38,13 @@ const cloneRepo = (repo:string, appName:string,port:Number, cb:any)=>{
 }
 
 
-const update = async (repo:String, appName:String, port:Number) =>{
+const update = async (repo:string, appName:string, port:number) =>{
     const inserted = await apps.create({ appName, repo, port});
     console.log(inserted);
 
 }
 
-const nginxConf = (app:string,port:Number, cb:any)=>{
+const nginxConf = (app:string,port:number, cb:(err:any, port?: number)=>void )=>{
     const content = `
     server {
         listen ${port};
