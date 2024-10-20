@@ -1,9 +1,9 @@
 import { deploy } from "./controller";
 
-const express = require("express");
+import express from "express";
 const app = express();
-const bodyParser = require("body-parser")
-const cors = require("cors");
+import bodyParser from "body-parser";
+import cors from "cors";
 
 app.use(express.json());
 app.use(cors());

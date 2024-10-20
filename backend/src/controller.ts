@@ -1,6 +1,6 @@
 import { apps, ports } from "./models";
-const { exec } = require("child_process");
-const fs = require("fs");
+import { exec } from "child_process";
+import fs from "fs";
 
 const deploy = async (repo:string, app:string, cb:any)=>{
     try{
@@ -21,10 +21,10 @@ const deploy = async (repo:string, app:string, cb:any)=>{
 
 const cloneRepo = (repo:string, appName:string,port:Number, cb:any)=>{
     const cloneRepo = exec(`git clone ${repo} /var/www/${appName}`);
-    cloneRepo.stdout.on("data", (data:any)=>{
+    cloneRepo.stdout?.on("data", (data:any)=>{
         console.log(data);
     })
-    cloneRepo.stderr.on("data", (error:any)=>{
+    cloneRepo.stderr?.on("data", (error:any)=>{
         console.error(error);
     })
     cloneRepo.on("close", (code:any)=>{
