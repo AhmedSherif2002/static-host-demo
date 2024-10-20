@@ -12,23 +12,22 @@ app.listen(3000, ()=>{
     console.log("Server is Running on port", 3000);
 })
 
-app.post("/uploadProject",(req: Request, res: Response)=>{
+app.post("/uploadProject", async (req: Request, res: Response)=>{
     console.log(req.body);
     const repo = req.body.url;  
     const appname = req.body.projectName;
-    deploy(repo, appname, (err:any, port?: number)=>{
-        if(err){
-            console.log(err);
-            res.json({
-                success: false,
-                message: "Error"
-            });
-            return;
-        }
+    try {
+        const port = await deploy(repo, appname);
         res.json({
             success: true,
             message: "App was deployed",
             port: port 
         });
-    })
+    } catch (error) {
+        console.log(error);
+        res.json({
+            success: false,
+            message: "Error"
+        });
+    }
 })

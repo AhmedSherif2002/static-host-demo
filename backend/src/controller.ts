@@ -2,7 +2,7 @@ import { apps } from "./models";
 import { exec } from "child_process";
 import fs from "fs";
 
-const deploy = async (repo:string, app:string, cb: (err:any, port?: number)=>void )=>{
+const deploy = async (repo:string, app:string)=>{
     try{
         // const found = await apps.find({appName: app});
         // if(found.length !== 0){
@@ -12,28 +12,32 @@ const deploy = async (repo:string, app:string, cb: (err:any, port?: number)=>voi
         const maxPort = (await apps.find({}).sort({ port: -1 }))[0]?.port;
         const port = maxPort?maxPort+1:3500;
         console.log(maxPort,port);
-        cloneRepo(repo, app, port, cb);
+        await cloneRepo(repo, app, port);
+        return port;
     }catch(err){
-        cb(err);
         console.log(err);
+        throw err;
     }
 } 
 
-const cloneRepo = (repo:string, appName:string,port:number, cb:(err:any, port?: number)=>void )=>{
-    const cloneRepo = exec(`git clone ${repo} /var/www/${appName}`);
-    cloneRepo.stdout?.on("data", (data:any)=>{
-        console.log(data);
-    })
-    cloneRepo.stderr?.on("data", (error:any)=>{
-        console.error(error);
-    })
-    cloneRepo.on("close", (code)=>{
-        console.log(`Process exited with code ${code}`);
-        if(code === 0){
-            console.log("done")
-            nginxConf(appName, port, cb);
-            update(repo,appName,port);
-        }else cb(code);
+const cloneRepo = (repo:string, appName:string,port:number)=>{
+    return new Promise<void>((resolve, reject)=>{
+        const cloneRepo = exec(`git clone ${repo} /var/www/${appName}`);
+        cloneRepo.stdout?.on("data", (data:any)=>{
+            console.log(data);
+        })
+        cloneRepo.stderr?.on("data", (error:any)=>{
+            console.error(error);
+        })
+        cloneRepo.on("close", async (code)=>{
+            console.log(`Process exited with code ${code}`);
+            if(code === 0){
+                console.log("done")
+                await nginxConf(appName, port);
+                update(repo,appName,port);
+                resolve()
+            }else reject(code);
+        })
     })
 }
 
@@ -44,30 +48,32 @@ const update = async (repo:string, appName:string, port:number) =>{
 
 }
 
-const nginxConf = (app:string,port:number, cb:(err:any, port?: number)=>void )=>{
-    const content = `
-    server {
-        listen ${port};
-        listen [::]:${port};
+const nginxConf = (app:string,port:number)=>{
+    return new Promise<void>((resolve, reject)=>{
+        const content = `
+        server {
+            listen ${port};
+            listen [::]:${port};
 
-        server_name example.ubuntu.com;
+            server_name example.ubuntu.com;
 
-        root /var/www/${app};
-        # index index.html;
+            root /var/www/${app};
+            # index index.html;
 
-        location / {
-                try_files $uri $uri/ =404;
+            location / {
+                    try_files $uri $uri/ =404;
+            }
         }
-    }
-    `;
-    fs.appendFile("/etc/nginx/sites-enabled/conf", content, (e:any)=>{
-        if(e){
-            return console.log(e);
-        }
-        const reset = exec("service nginx restart");
-        reset.on("close",(code:number)=>{
-            if(code !== 0) return cb(code);
-            cb(null,port);
+        `;
+        fs.appendFile("/etc/nginx/sites-enabled/conf", content, (e:any)=>{
+            if(e){
+                return console.log(e);
+            }
+            const reset = exec("service nginx restart");
+            reset.on("close",(code:number)=>{
+                if(code !== 0) reject("Nginx failed to restart. Code: "+code);
+                resolve();
+            })
         })
     })
 }
