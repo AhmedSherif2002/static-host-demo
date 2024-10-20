@@ -1,4 +1,4 @@
-import { apps, ports } from "./models";
+import { apps } from "./models";
 import { exec } from "child_process";
 import fs from "fs";
 
